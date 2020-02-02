@@ -50,6 +50,10 @@ basePath: ''
 # (15 minutes).
 cacheTimeout: 900
 
+# Maximum number of days to retain logged changes. Set to 0 to retain change
+# logs indefinitely. (Default: 90)
+changelogRetention: 90
+
 # API Cross-Origin Resource Sharing (CORS) settings. If originAllowAll
 # is set to true, all origins will be allowed. Otherwise, define a list of
 # allowed origins using either originWhitelist or originRegexWhitelist. For
@@ -131,9 +135,6 @@ preferIPv4: false
 # Expose Prometheus monitoring metrics at the HTTP endpoint '/metrics'
 metricsEnabled: false
 
-# Webhooks can be disabled to remove the dependency on Redis.
-webhooksEnabled: true
-
 # Time zone (default: UTC)
 timeZone: UTC
 
@@ -156,8 +157,10 @@ secretKey: ""
 #     externalDatabase.existingSecretName is blank)
 # - email_password: SMTP user password
 # - napalm_password: NAPALM user password
-# - redis_password: Redis password (if redis.enabled is false and
-#     externalRedis.existingSecretName is blank)
+# - redis_password: Redis password for webhooks Redis instance (if
+#     redis.enabled is false and webhooksRedis.existingSecretName is blank)
+# - redis_cache_password: Redis password for caching Redis instance (if
+#     redis.enabled is false and cachingRedis.existingSecretName is blank)
 # - secret_key: session encryption token (50+ random characters)
 existingSecret: ""
 
@@ -181,19 +184,31 @@ externalDatabase:
   existingSecretName: ""
   existingSecretKey: postgresql-password
 
-redisDatabase: 0
-redisCacheDatabase: 1
-redisTimeout: 300
-redisSsl: false
-
 redis:
   ## Deploy Redis using bundled chart
   # To use an external Redis instance, set this to false and configure the
-  # settings under externalRedis
+  # settings under *both* webhooksRedis *and* cachingRedis
   enabled: true
 
-externalRedis:
+webhooksRedis:
+  database: 0
+  timeout: 300
+  ssl: false
+
+  # Used only when redis.enabled is false
   host: localhost
+  port: 6379
+  password: ""
+  existingSecretName: ""
+  existingSecretKey: redis-password
+
+cachingRedis:
+  database: 1
+  timeout: 300
+  ssl: false
+
+  # Used only when redis.enabled is false
+  host: ""
   port: 6379
   password: ""
   existingSecretName: ""
